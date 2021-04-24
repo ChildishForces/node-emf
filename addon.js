@@ -1,5 +1,6 @@
 var fs = require('fs');
 var addon = require('bindings')('emf2svg-node.node')
 
-var image = fs.readFileSync('./image007.emz').toString('binary');
+var image = fs.readFileSync('./sample-input.emz');
+// console.log(image);
 console.log(addon.convert(image))
