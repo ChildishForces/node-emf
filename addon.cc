@@ -21,24 +21,29 @@ Napi::Value Convert(const Napi::CallbackInfo& info) {
 
   char *svg_out = NULL;
   size_t svg_len;
+
+  // Construct the lib options
   generatorOptions *options = (generatorOptions *)calloc(1, sizeof(generatorOptions));
-  options->verbose = true;
-  options->emfplus = NULL;
+  options->verbose = false; // Outputs information about the process
+  options->emfplus = NULL; // Adds support for EMF+, unnecessary but potentially could be included with a config object later on
   options->svgDelimiter = true;
-  options->imgWidth = 0;
-  options->imgHeight = 0;
-  std::string input = info[0].ToString();
+  options->imgWidth = 0; // 0 inherits the EMF/EMZ original width
+  options->imgHeight = 0; // 0 inherits the EMF/EMZ original height
 
-    std::ifstream in("/var/task/node-libemf2svg/sample-input.emz");
-    if (!in.is_open()) {
-        std::cerr << "[ERROR] "
-                  << "Impossible to open input file '" << "/var/task/node-libemf2svg/sample-input.emz"
-                  << "'\n";
-    }
-    std::string contents((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  // cast the Napi::Value to a Napi::Buffer<char>
+  Napi::Buffer<char> buffer = info[0].As<Napi::Buffer<char>>();
+  std::string inputString;
 
-  int ret = emf2svg((char *)contents.c_str(), contents.size(), &svg_out, &svg_len, options);
+  // Iterate over the buffer to construct a std::string
+  int x;
+  for (x = 0; x < buffer.Length(); x++) {
+    inputString += buffer[x];
+  }
 
+  // Perform the transformation
+  int ret = emf2svg((char *)inputString.c_str(), inputString.size(), &svg_out, &svg_len, options);
+
+  // If ret != 0, transform has succeeded and is now ready
   if (ret != 0) {
     Napi::String retVal = Napi::String::New(env, std::string(svg_out));
 
@@ -49,14 +54,7 @@ Napi::Value Convert(const Napi::CallbackInfo& info) {
 
   free(svg_out);
   free(options);
-
-//  std::cout << contents << std::endl;
-//  std::cout << "\n";
-//  std::cout << "[NEW FILE]";
-//  std::cout << "\n";
-
-  Napi::TypeError::New(env, input).ThrowAsJavaScriptException();
-//  Napi::TypeError::New(env, "An error occurred whilst converting the file").ThrowAsJavaScriptException();
+  Napi::TypeError::New(env, "An error occurred whilst converting the file").ThrowAsJavaScriptException();
   return env.Null();
 }
 

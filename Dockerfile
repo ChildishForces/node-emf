@@ -13,7 +13,7 @@ RUN make install
 WORKDIR ${LAMBDA_TASK_ROOT}
 RUN git clone https://github.com/kakwa/libemf2svg.git
 WORKDIR ${LAMBDA_TASK_ROOT}/libemf2svg
-RUN cmake .
+RUN cmake -DUSE_CLANG=on _DCMAKE_INSTALL_PREFIX=/ .
 RUN make
 RUN make install
 
@@ -23,7 +23,6 @@ WORKDIR ${LAMBDA_TASK_ROOT}/node-libemf2svg
 COPY . .
 RUN npm i
 RUN npm run install
-RUN ls -la node_modules
 RUN node ./addon
 
 # Set the CMD to your handler (could also be done as a parameter override outside of the Dockerfile)
